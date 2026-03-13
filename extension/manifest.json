@@ -1,0 +1,26 @@
+{
+    "name": "Ditch the Scroll",
+    "version": "0.1",
+    "manifest_version": 3,
+    "description": "Your friendly reminder that life exists offline.",
+    "permissions": ["storage", "tabs", "activeTab"],
+    "content_scripts": [
+        {
+            "matches": ["*://*.instagram.com/*", "*://*.tiktok.com/*", "*://*.facebook.com/*", "*://*.twitter.com/*"],
+            "js": ["./scripts/scrollDetector.js"],
+            "css": ["./css/styles.css"]
+        }
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "action": {
+        "default_icon":{
+            "16": "./assets/icon_16.png",
+            "48": "./assets/icon_48.png",
+            "128": "./assets/icon_128.png"
+        },
+        "default_title": "Ditch the Scroll",
+        "default_popup": "index.html"
+    }
+}
