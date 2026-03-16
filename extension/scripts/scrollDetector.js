@@ -13,9 +13,19 @@ chrome.storage.local.set({ currentSite: siteNames[window.location.hostname] })
 
 let timerStarted = false //no timer has started when first loaded
 
+let idleTimer = null //to see if use is idle or not?
+let isIdle = true
+let countInterval = null
+
 window.addEventListener("scroll", function(){ //user has started using instagram or facebook
     
     console.log("Scrolling Detected") //only for my info
+
+    clearTimeout(idleTimer)
+    idleTimer = setTimeout(function(){
+        clearInterval(countInterval)
+        timerStarted = false  //they've been idle for 5 mins, pause counting
+    }, 300000) // 300000 = 5 minutes
     
     if (timerStarted === false){ //if this is the 1st time user has doomscrolled, we do everything inside
         window.setTimeout(after_45m, 10000); //it has been 45 minutes of scroling, now what? 2.7e+6 for 45 min
@@ -27,7 +37,7 @@ window.addEventListener("scroll", function(){ //user has started using instagram
         }
     
         let count = 0 //answers" has the doomscrolling been consistent? Its checking every 30 seconds
-        window.setInterval(after_30s, 30000);
+        countInterval = window.setInterval(after_30s, 30000);
     
         function after_30s(){ 
             console.log(++count)
@@ -35,4 +45,6 @@ window.addEventListener("scroll", function(){ //user has started using instagram
         }
         timerStarted = true
     }
+
+
 })
