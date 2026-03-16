@@ -21,6 +21,6 @@
             "128": "./assets/icon_128.png"
         },
         "default_title": "Ditch the Scroll",
-        "default_popup": "index.html"
+        "default_popup": "popup/dist/index.html"
     }
 }
