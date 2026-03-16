@@ -1,4 +1,16 @@
 chrome.storage.local.set({ scrollTime: 0 })
+
+const siteNames = {
+    'www.instagram.com': 'Instagram',
+    'www.tiktok.com': 'TikTok',
+    'www.facebook.com': 'Facebook',
+    'www.twitter.com': 'Twitter',
+    'www.reddit.com': 'Reddit',
+    'www.youtube.com': 'YouTube'
+  }
+
+chrome.storage.local.set({ currentSite: siteNames[window.location.hostname] })
+
 let timerStarted = false //no timer has started when first loaded
 
 window.addEventListener("scroll", function(){ //user has started using instagram or facebook

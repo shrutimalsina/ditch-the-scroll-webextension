@@ -3,13 +3,25 @@ import { Coffee, ChartColumn, Settings, Bell } from 'lucide-react'
 import { useState, useEffect } from 'react';
 
 function App() {
-  
+
+  // This is for time
   const [scrollTime, setScrollTime] = useState(0);
   useEffect(() => {
     chrome.storage.local.get('scrollTime', function(result) {
       setScrollTime(result.scrollTime || 0);
     });
   }, []);
+
+
+  // this is for site name
+  const [currentSite, setcurrentSite] = useState("No site");
+  useEffect(() => {
+    chrome.storage.local.get('currentSite', function(result) {
+      setcurrentSite(result.currentSite || "No site");
+    });
+  }, []);
+
+
   return(
     
     <div className="everything font-[Iosevka_Charon] text-2xl text-center w-96 min-h-[28rem] flex flex-col rounded-2xl shadow-2xl overflow-hidden border border-rose-200">
@@ -31,7 +43,7 @@ function App() {
         </div>
         
         <div className='bg-white/60 backdrop-blur-sm rounded-xl p-3 shadow-inner'>
-          <p className='text-gray-800'>You've been scrolling for</p>
+          <p className='text-gray-800'>You've been scrolling on {currentSite} for</p>
           <p className='text-4xl font-bold text-rose-500 animate-pulse mt-1'>
             {scrollTime}
             <span className='text-2xl ml-1'>mins</span>
