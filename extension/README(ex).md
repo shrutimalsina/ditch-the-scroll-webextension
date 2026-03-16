@@ -8,3 +8,5 @@
         setInterval checks every 30 seconds → "still scrolling? okay, keep counting"
         setTimeout resets → "no scrolling for 5 mins? okay they probably stopped"
         Clock hits 45 minutes → trigger the nudge!)
+
+4) I learned to build React app using Vite and other components. Many things including tailwindcss and its easibility...
