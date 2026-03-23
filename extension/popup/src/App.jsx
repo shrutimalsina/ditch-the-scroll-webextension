@@ -3,22 +3,36 @@ import { Coffee, ChartColumn, Settings, Bell } from 'lucide-react'
 import { useState, useEffect } from 'react';
 
 function App() {
-
-  // This is for time
   const [scrollTime, setScrollTime] = useState(0);
-  useEffect(() => {
-    chrome.storage.local.get('scrollTime', function(result) {
-      setScrollTime(result.scrollTime || 0);
-    });
-  }, []);
+  const [currentSite, setCurrentSite] = useState('No site');
 
+  const handleChange = (changes, areaName) => {
+    if (areaName !== 'local') return;
 
-  // this is for site name
-  const [currentSite, setcurrentSite] = useState("No site");
+    if (changes.scrollTime) {
+      setScrollTime(changes.scrollTime.newValue ?? 0);
+    }
+    if (changes.currentSite) {
+      setCurrentSite(changes.currentSite.newValue ?? 'No site');
+    }
+  };
+
   useEffect(() => {
-    chrome.storage.local.get('currentSite', function(result) {
-      setcurrentSite(result.currentSite || "No site");
-    });
+    if (!chrome?.storage?.local) return;
+  
+    const init = () => {
+      chrome.storage.local.get(['scrollTime', 'currentSite'], (result) => {
+        setScrollTime(result.scrollTime ?? 0);
+        setCurrentSite(result.currentSite ?? 'No site');
+      });
+    };
+  
+    init();
+    chrome.storage.onChanged.addListener(handleChange);
+  
+    return () => {
+      chrome.storage.onChanged.removeListener(handleChange);
+    };
   }, []);
 
 

@@ -9,42 +9,87 @@ const siteNames = {
     'www.youtube.com': 'YouTube'
   }
 
-chrome.storage.local.set({ currentSite: siteNames[window.location.hostname] })
+
+const DOOMSCROLL_THRESHOLD_MINUTES = 2; // How many minutes of scrolling before we say "this is doomscrolling"
+
+let hasTriggeredDoomscrollSession = false; // Have we already handled this doomscroll session?
+
+const currentSite =
+  siteNames[window.location.hostname] ??
+  window.location.hostname ??
+  'Unknown site';
+
+chrome.storage.local.set({ currentSite });
 
 let timerStarted = false //no timer has started when first loaded
-
 let idleTimer = null //to see if use is idle or not?
-let isIdle = true
 let countInterval = null
+let elapsedSeconds = 0;
 
-window.addEventListener("scroll", function(){ //user has started using instagram or facebook
-    
-    console.log("Scrolling Detected") //only for my info
+function startDoomscrollTimer(){
+    if (timerStarted)
+        return;
 
-    clearTimeout(idleTimer)
-    idleTimer = setTimeout(function(){
-        clearInterval(countInterval)
-        timerStarted = false  //they've been idle for 5 mins, pause counting
-    }, 300000) // 300000 = 5 minutes
-    
-    if (timerStarted === false){ //if this is the 1st time user has doomscrolled, we do everything inside
-        window.setTimeout(after_45m, 10000); //it has been 45 minutes of scroling, now what? 2.7e+6 for 45 min
-        console.log("Doomscrolling started")
-    
-        function after_45m(){
-            console.log("Doomscrolled for 45 minutes!")
-            chrome.storage.local.set({ scrollTime: 45 })
-        }
-    
-        let count = 0 //answers" has the doomscrolling been consistent? Its checking every 30 seconds
-        countInterval = window.setInterval(after_30s, 30000);
-    
-        function after_30s(){ 
-            console.log(++count)
-            chrome.storage.local.set({ scrollTime: Math.round(count / 2) })
-        }
-        timerStarted = true
-    }
+    console.log('Doomscrolling started');
+    timerStarted = true;
+    elapsedSeconds = 0;
 
+    // Every 30 seconds, increase elapsed time and update minutes in storage
+  countInterval = window.setInterval(() => {
+    elapsedSeconds += 30;
+    const minutes = Math.floor(elapsedSeconds / 60);
+    console.log('Doomscroll minutes:', minutes);
 
-})
+    chrome.storage.local.set({ scrollTime: minutes });
+
+    // If we crossed the threshold and haven't handled it yet, trigger once
+    if (!hasTriggeredDoomscrollSession && minutes >= DOOMSCROLL_THRESHOLD_MINUTES) {
+      hasTriggeredDoomscrollSession = true;
+      handleDoomscrollSession(minutes, currentSite);
+      }
+    }, 30_000);
+
+  // After 45 real minutes, trigger your “big nudge”
+  const FORTY_FIVE_MINUTES_MS = 45 * 60 * 1000;
+  window.setTimeout(() => {
+    console.log('Doomscrolled for 45 minutes!');
+    // Trigger something here later, but DO NOT touch scrollTime
+    // Example: send a message to background or show UI
+    // chrome.runtime.sendMessage({ type: 'DOOMSCROLL_45_MIN' });
+  }, FORTY_FIVE_MINUTES_MS);
+}
+
+function handleDoomscrollSession(minutes, site){
+  console.log(
+    `[Ditch The Scroll] Doomscroll session detected: ${site} for ${minutes} mins`
+  );
+  // // Later: we will send this to backend so phone can show a nudge like fetch('https://your-backend-url/session', { ... })
+}
+
+function stopDoomscrollTimer() {
+  if (countInterval) {
+    clearInterval(countInterval);
+    countInterval = null;
+  }
+  timerStarted = false;
+  elapsedSeconds = 0;
+  hasTriggeredDoomscrollSession = false; // reset for next session
+  console.log('Doomscrolling paused (idle for 5 minutes)');
+}
+
+// User scrolls → we consider them "active"
+window.addEventListener('scroll', () => {
+  console.log('Scrolling detected');
+
+  // Reset idle timer every time they scroll
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    // No scroll for 5 minutes → stop tracking
+    stopDoomscrollTimer();
+  }, 5 * 60 * 1000); // 5 minutes
+
+  // If timer hasn't started yet, start it
+  if (!timerStarted) {
+    startDoomscrollTimer();
+  }
+});

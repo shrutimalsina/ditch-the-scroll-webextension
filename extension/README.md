@@ -20,3 +20,4 @@ or
 "Scroll less. Live more."
 or 
 "Your friendly reminder that life exists offline."
+
