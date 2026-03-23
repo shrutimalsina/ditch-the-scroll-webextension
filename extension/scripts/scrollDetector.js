@@ -64,6 +64,21 @@ function handleDoomscrollSession(minutes, site){
     `[Ditch The Scroll] Doomscroll session detected: ${site} for ${minutes} mins`
   );
   // // Later: we will send this to backend so phone can show a nudge like fetch('https://your-backend-url/session', { ... })
+
+
+// Tell the background script so it can call the backend
+chrome.runtime.sendMessage(
+  {
+    type: 'DOOMSCROLL_DETECTED',
+    site,
+    minutes,
+    userId: 'shruti-demo', // temporary hardcoded user id
+  },
+  (response) => {
+    console.log('Background responded to doomscroll message:', response);
+  }
+);
+// Later: we will send this to backend so phone can show a nudge like fetch('https://your-backend-url/session', { ... })
 }
 
 function stopDoomscrollTimer() {
