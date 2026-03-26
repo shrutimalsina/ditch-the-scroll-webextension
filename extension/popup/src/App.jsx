@@ -35,6 +35,19 @@ function App() {
     };
   }, []);
 
+  // tell background the popup was opened so it can clear the badge
+  useEffect(() => {
+    try {
+      chrome.runtime.sendMessage(
+        { type: 'POPUP_OPENED' },
+        () => {
+          // no need to do anything with the response here
+        }
+      );
+    } catch (e) {
+      console.warn('Failed to send POPUP_OPENED message:', e);
+    }
+  }, []);
 
   return(
     
