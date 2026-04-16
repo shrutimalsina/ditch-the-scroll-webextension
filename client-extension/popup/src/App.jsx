@@ -115,7 +115,7 @@ function App() {
           if (!response.ok) {
             setAuthInfo('Signed in, but backend sync failed. Check API server status.');
           }
-        } catch (_error) {
+        } catch {
           setAuthInfo('Signed in, but backend sync failed. Check API server status.');
         }
       }
@@ -133,7 +133,7 @@ function App() {
       }
 
       setAuthInfo('Login successful.');
-    } catch (_error) {
+    } catch {
       setAuthError('Unable to complete authentication. Please try again.');
     } finally {
       setIsSubmitting(false);
