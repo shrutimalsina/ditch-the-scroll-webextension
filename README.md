@@ -78,6 +78,7 @@
 ### `/client-extension/popup/.env`
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
+- `VITE_API_BASE_URL` (optional, defaults to `http://localhost:4000`)
 
 ### `/mobile-app/.env`
 - `EXPO_PUBLIC_API_BASE_URL`

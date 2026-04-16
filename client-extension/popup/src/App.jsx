@@ -5,6 +5,7 @@ import { createSharedAuth, createWebStorageAdapter } from '@ditch-the-scroll/sha
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000').replace(/\/+$/, '');
 
 function App() {
   const [scrollTime, setScrollTime] = useState(0);
@@ -14,6 +15,8 @@ function App() {
   const [authMode, setAuthMode] = useState('login');
   const [session, setSession] = useState(null);
   const [authError, setAuthError] = useState('');
+  const [authInfo, setAuthInfo] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const auth = useMemo(() => {
     if (!supabaseUrl || !supabaseAnonKey) return null;
@@ -77,49 +80,95 @@ function App() {
 
   async function submitAuth() {
     setAuthError('');
+    setAuthInfo('');
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || !password) {
+      setAuthError('Please enter both email and password.');
+      return;
+    }
 
     if (!auth) {
       setAuthError('Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to sign in.');
       return;
     }
 
-    const fn = authMode === 'login' ? auth.signIn : auth.signUp;
-    const { data, error } = await fn({ email, password });
+    setIsSubmitting(true);
 
-    if (error) {
-      setAuthError(error.message);
-      return;
-    }
+    try {
+      const fn = authMode === 'login' ? auth.signIn : auth.signUp;
+      const { data, error } = await fn({ email: normalizedEmail, password });
 
-    if (data?.user) {
-      await fetch('http://localhost:4000/auth/sync-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: data.user.id, email: data.user.email }),
-      });
+      if (error) {
+        setAuthError(error.message);
+        return;
+      }
+
+      if (data?.user) {
+        try {
+          const response = await fetch(`${apiBaseUrl}/auth/sync-user`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: data.user.id, email: data.user.email }),
+          });
+
+          if (!response.ok) {
+            setAuthInfo('Signed in, but backend sync failed. Check API server status.');
+          }
+        } catch (_error) {
+          setAuthInfo('Signed in, but backend sync failed. Check API server status.');
+        }
+      }
+
+      if (authMode === 'signup') {
+        if (!data?.session) {
+          setAuthInfo('Signup successful. Confirm your email, then log in.');
+          setAuthMode('login');
+          setPassword('');
+          return;
+        }
+
+        setAuthInfo('Signup successful.');
+        return;
+      }
+
+      setAuthInfo('Login successful.');
+    } catch (_error) {
+      setAuthError('Unable to complete authentication. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   if (!session) {
     return (
-      <div className="everything font-[Iosevka_Charon] text-center w-96 min-h-[28rem] flex flex-col rounded-2xl shadow-2xl overflow-hidden border border-rose-200 p-6 gap-3 bg-[#fdf6ec]">
+      <div className="everything font-[Iosevka_Charon] text-center w-96 min-h-[28rem] flex flex-col rounded-2xl shadow-2xl overflow-hidden border border-rose-200 p-6 gap-4 bg-[#fdf6ec]">
         <h1 className="font-[Dancing_Script] text-4xl">Ditch The Scroll</h1>
-        <p className="text-sm text-stone-600">Login to sync nudges across extension + mobile.</p>
+        <p className="text-sm text-stone-600">Sign in to sync nudges across extension + mobile.</p>
+        <div className="bg-white/70 rounded-xl p-3 flex flex-col gap-2">
         <input
-          className="rounded-xl border border-rose-200 p-2"
+          className="rounded-xl border border-rose-200 p-2 bg-white"
           placeholder="Email"
+          type="email"
+          autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
-          className="rounded-xl border border-rose-200 p-2"
+          className="rounded-xl border border-rose-200 p-2 bg-white"
           placeholder="Password"
           type="password"
+          autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button className="rounded-full bg-orange-500 text-white py-2" onClick={submitAuth}>
-          {authMode === 'login' ? 'Login' : 'Sign up'}
+        </div>
+        <button
+          className="rounded-full bg-orange-500 text-white py-2 font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+          onClick={submitAuth}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Please wait...' : authMode === 'login' ? 'Login' : 'Sign up'}
         </button>
         <button
           className="text-xs text-stone-600"
@@ -128,6 +177,7 @@ function App() {
           {authMode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Login'}
         </button>
         {!!authError && <p className="text-xs text-red-600">{authError}</p>}
+        {!!authInfo && <p className="text-xs text-emerald-700">{authInfo}</p>}
       </div>
     );
   }
