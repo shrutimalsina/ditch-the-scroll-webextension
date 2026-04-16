@@ -6,10 +6,24 @@ import { createSharedAuth, createWebStorageAdapter } from '@ditch-the-scroll/sha
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const BACKEND_SYNC_WARNING = 'Signed in, but backend sync failed. Check API server status.';
+const SIGNUP_RATE_LIMIT_WARNING =
+  'Too many signup emails were requested. Please wait a minute before trying again, or log in if your account already exists.';
 
 function normalizeApiBaseUrl(value) {
   if (typeof value !== 'string') return 'http://localhost:4000';
   return value.trim().replace(/\/+$/, '') || 'http://localhost:4000';
+}
+
+function getAuthErrorMessage(errorMessage, authMode) {
+  if (
+    authMode === 'signup' &&
+    typeof errorMessage === 'string' &&
+    /email rate limit exceeded|over_email_send_rate_limit/i.test(errorMessage)
+  ) {
+    return SIGNUP_RATE_LIMIT_WARNING;
+  }
+
+  return errorMessage || 'Unable to complete authentication. Please try again.';
 }
 
 const apiBaseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
@@ -109,7 +123,7 @@ function App() {
       const { data, error } = await fn({ email: normalizedEmail, password });
 
       if (error) {
-        setAuthError(error.message);
+        setAuthError(getAuthErrorMessage(error.message, authMode));
       } else {
         if (data?.user) {
           try {
