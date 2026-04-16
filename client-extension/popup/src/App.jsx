@@ -5,7 +5,14 @@ import { createSharedAuth, createWebStorageAdapter } from '@ditch-the-scroll/sha
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000').replace(/\/+$/, '');
+const BACKEND_SYNC_WARNING = 'Signed in, but backend sync failed. Check API server status.';
+
+function normalizeApiBaseUrl(value) {
+  if (typeof value !== 'string') return 'http://localhost:4000';
+  return value.trim().replace(/\/+$/, '') || 'http://localhost:4000';
+}
+
+const apiBaseUrl = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
 
 function App() {
   const [scrollTime, setScrollTime] = useState(0);
@@ -16,6 +23,7 @@ function App() {
   const [session, setSession] = useState(null);
   const [authError, setAuthError] = useState('');
   const [authInfo, setAuthInfo] = useState('');
+  const [backendWarning, setBackendWarning] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const auth = useMemo(() => {
@@ -81,6 +89,7 @@ function App() {
   async function submitAuth() {
     setAuthError('');
     setAuthInfo('');
+    setBackendWarning('');
 
     const normalizedEmail = email.trim().toLowerCase();
     if (!normalizedEmail || !password) {
@@ -111,11 +120,11 @@ function App() {
             });
 
             if (!response.ok) {
-              setAuthInfo('Signed in, but backend sync failed. Check API server status.');
+              setBackendWarning(BACKEND_SYNC_WARNING);
             }
           } catch (syncError) {
             console.warn('Backend sync failed after auth:', syncError);
-            setAuthInfo('Signed in, but backend sync failed. Check API server status.');
+            setBackendWarning(BACKEND_SYNC_WARNING);
           }
         }
 
@@ -183,6 +192,7 @@ function App() {
           {authMode === 'login' ? 'Need an account? Sign up' : 'Already have an account? Login'}
         </button>
         {!!authError && <p className="text-xs text-red-600">{authError}</p>}
+        {!!backendWarning && <p className="text-xs text-amber-700">{backendWarning}</p>}
         {!!authInfo && <p className="text-xs text-emerald-700">{authInfo}</p>}
       </div>
     );
