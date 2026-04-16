@@ -9,7 +9,8 @@ async function getApiBaseUrl() {
   try {
     const { apiBaseUrl } = await chrome.storage.local.get(['apiBaseUrl']);
     return normalizeApiBaseUrl(apiBaseUrl);
-  } catch {
+  } catch (error) {
+    console.warn('Unable to read apiBaseUrl from extension storage. Using default URL.', error);
     return DEFAULT_API_BASE_URL;
   }
 }
