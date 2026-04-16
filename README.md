@@ -1,26 +1,90 @@
 # ditch-the-scroll-webextension
-A playful Chrome extension that detects doomscrolling and delivers kind interruptions.
 
+## Folder structure
 
-So, my idea is:
+```txt
+/client-extension        # Existing extension (preserved and integrated)
+  /popup                 # React + Tailwind popup
+/mobile-app              # React Native + Expo app
+/server                  # Node.js + Express API
+  /src
+    /config
+    /controllers
+    /lib
+    /routes
+  /supabase/schema.sql
+/shared                  # Shared auth + nudge logic for extension/mobile/server
+```
 
-What the Chrome Extension Does (Simply Putting)
-The extension runs quietly in the background while users browse. Its job is to notice when they are doomscrolling and trigger the nudge.
-Step by Step:
-1. Watches user's tabs: Knows which site they are actively on (Instagram, Twitter, Reddit, TikTok, YouTube)
-2. Tracks time: Starts a timer when they land on a social media site: Keeps counting as long as they stay on that tab
-3. Detects scrolling: Listens for scroll events — are they actually scrolling or just left the tab open?: If they haven't 'scrolled' in a while, it assumes you're idle and resets
-4. Makes a decision: After 45+ minutes of active scrolling on a social site: It decides: "Yep, this is doomscrolling."
-5. Takes action: Sends that session data to the backend which triggers a push notification to the user's phone
-6. Shows popup (optional): If they click the extension icon, they can see their stats, change settings, or manually trigger a nudge
+## Step-by-step implementation
 
+### 1) Backend setup (`/server`)
+- Express app with controller-based routes:
+  - `POST /auth/sync-user`
+  - `GET /nudges`
+  - `POST /activity`
+- Added push routes:
+  - `POST /push/register`
+  - `POST /push/send-nudge`
+- Kept legacy `POST /session` for backward compatibility.
 
-In One Sentence:
-The Chrome extension is the detective that notices the users are stuck in a scroll loop and calls the mobile app to gently interrupt them.
+### 2) Supabase integration
+- Shared Supabase client/auth utilities in `/shared`.
+- Server uses Supabase service-role client (when env vars are set).
+- Extension popup and mobile app use shared auth utility for email/password auth and session persistence.
+- SQL schema added at `/server/supabase/schema.sql` for:
+  - `users`
+  - `nudges`
+  - `user_activity`
 
-Catchy Phrase or whatever:
-"Because your time deserves better than an endless scroll."
-or 
-"Scroll less. Live more."
-or 
-"Your friendly reminder that life exists offline."
+### 3) Mobile app (`/mobile-app`)
+- Expo app with card/step-based no-scroll UX.
+- Screens implemented in app flow:
+  - Login/Signup
+  - Home
+  - Mood check-in
+  - Full-screen Nudge screen
+- Auth + session persistence via shared Supabase utility.
+
+### 4) Nudge engine (`/shared`)
+- Reusable emotional nudge engine with shared trigger logic:
+  - inactive > 24h → re-engagement support
+  - mood = `stressed` → calming support
+  - doomscroll trigger → gentle interruption
+- Shared output shape includes `triggerType`, `message`, and `action`.
+
+### 5) Extension integration (`/client-extension`)
+- Extension background now calls backend API for:
+  - user sync
+  - activity updates
+  - nudge retrieval
+- Content script shows backend-provided nudge message as overlay.
+- Popup includes auth flow and syncs authenticated user ID to extension storage.
+
+## Push notifications (Firebase)
+- Mobile registers device push token through `/push/register`.
+- Backend includes Firebase Admin integration and push endpoint (`/push/send-nudge`).
+- Configure `FIREBASE_SERVICE_ACCOUNT_JSON` in server env.
+
+## Environment variables
+
+### `/server/.env`
+- `PORT`
+- `CORS_ORIGIN`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `FIREBASE_SERVICE_ACCOUNT_JSON`
+
+### `/client-extension/popup/.env`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+### `/mobile-app/.env`
+- `EXPO_PUBLIC_API_BASE_URL`
+- `EXPO_PUBLIC_SUPABASE_URL`
+- `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+
+## Deployment targets
+- Backend: Vercel
+- Extension: Chrome Web Store
+- Mobile: Expo EAS

@@ -1,0 +1,17 @@
+{
+  "name": "ditch-the-scroll-monorepo",
+  "private": true,
+  "workspaces": [
+    "client-extension/popup",
+    "mobile-app",
+    "server",
+    "shared"
+  ],
+  "scripts": {
+    "server:start": "npm --prefix server run start",
+    "server:dev": "npm --prefix server run dev",
+    "extension:build": "npm --prefix client-extension/popup run build",
+    "extension:lint": "npm --prefix client-extension/popup run lint",
+    "mobile:start": "npm --prefix mobile-app run start"
+  }
+}
