@@ -25,7 +25,9 @@ async function syncUser({ userId, email = 'extension-user@ditchthescroll.app' })
     });
 
     if (!syncResponse.ok) {
-      throw new Error(`sync-user failed with status ${syncResponse.status}`);
+      throw new Error(
+        `sync-user failed with status ${syncResponse.status} ${syncResponse.statusText || ''}`.trim(),
+      );
     }
   } catch (error) {
     console.error('Failed to sync user:', error);
@@ -46,7 +48,9 @@ async function postActivity({ userId, mood = null }) {
     });
 
     if (!activityResponse.ok) {
-      throw new Error(`activity failed with status ${activityResponse.status}`);
+      throw new Error(
+        `activity failed with status ${activityResponse.status} ${activityResponse.statusText || ''}`.trim(),
+      );
     }
   } catch (error) {
     console.error('Failed to post activity:', error);

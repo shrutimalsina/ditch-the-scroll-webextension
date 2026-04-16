@@ -140,11 +140,12 @@ function App() {
   }
 
   if (!session) {
-    const authSubmitLabel = isSubmitting
-      ? 'Please wait...'
-      : authMode === 'login'
-        ? 'Login'
-        : 'Sign up';
+    let authSubmitLabel = 'Sign up';
+    if (isSubmitting) {
+      authSubmitLabel = 'Please wait...';
+    } else if (authMode === 'login') {
+      authSubmitLabel = 'Login';
+    }
 
     return (
       <div className="everything font-[Iosevka_Charon] text-center w-96 min-h-[28rem] flex flex-col rounded-2xl shadow-2xl overflow-hidden border border-rose-200 p-6 gap-4 bg-[#fdf6ec]">
