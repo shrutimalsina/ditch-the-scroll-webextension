@@ -1,3 +1,6 @@
+//Phase 1: scroll detection
+//Phase 4: nudge showing
+
 chrome.storage.local.set({ scrollTime: 0 })
 
 const siteNames = {
@@ -83,6 +86,7 @@ function handleDoomscrollSession(minutes, site) {
 
     }
   );
+
 }
 
 function stopDoomscrollTimer() {
