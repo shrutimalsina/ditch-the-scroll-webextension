@@ -101,39 +101,38 @@ function App() {
 
       if (error) {
         setAuthError(error.message);
-        return;
-      }
+      } else {
+        if (data?.user) {
+          try {
+            const response = await fetch(`${apiBaseUrl}/auth/sync-user`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: data.user.id, email: data.user.email }),
+            });
 
-      if (data?.user) {
-        try {
-          const response = await fetch(`${apiBaseUrl}/auth/sync-user`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: data.user.id, email: data.user.email }),
-          });
-
-          if (!response.ok) {
+            if (!response.ok) {
+              setAuthInfo('Signed in, but backend sync failed. Check API server status.');
+            }
+          } catch (syncError) {
+            console.warn('Backend sync failed after auth:', syncError);
             setAuthInfo('Signed in, but backend sync failed. Check API server status.');
           }
-        } catch {
-          setAuthInfo('Signed in, but backend sync failed. Check API server status.');
-        }
-      }
-
-      if (authMode === 'signup') {
-        if (!data?.session) {
-          setAuthInfo('Signup successful. Confirm your email, then log in.');
-          setAuthMode('login');
-          setPassword('');
-          return;
         }
 
-        setAuthInfo('Signup successful.');
-        return;
+        if (authMode === 'signup') {
+          if (!data?.session) {
+            setAuthInfo('Signup successful. Confirm your email, then log in.');
+            setAuthMode('login');
+            setPassword('');
+          } else {
+            setAuthInfo('Signup successful.');
+          }
+        } else {
+          setAuthInfo('Login successful.');
+        }
       }
-
-      setAuthInfo('Login successful.');
-    } catch {
+    } catch (error) {
+      console.error('Authentication request failed:', error);
       setAuthError('Unable to complete authentication. Please try again.');
     } finally {
       setIsSubmitting(false);
