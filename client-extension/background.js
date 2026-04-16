@@ -18,14 +18,14 @@ async function getApiBaseUrl() {
 async function syncUser({ userId, email = 'extension-user@ditchthescroll.app' }) {
   try {
     const apiBaseUrl = await getApiBaseUrl();
-    const response = await fetch(`${apiBaseUrl}/auth/sync-user`, {
+    const syncResponse = await fetch(`${apiBaseUrl}/auth/sync-user`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: userId, email }),
     });
 
-    if (!response.ok) {
-      throw new Error(`sync-user failed with status ${response.status}`);
+    if (!syncResponse.ok) {
+      throw new Error(`sync-user failed with status ${syncResponse.status}`);
     }
   } catch (error) {
     console.error('Failed to sync user:', error);
@@ -35,7 +35,7 @@ async function syncUser({ userId, email = 'extension-user@ditchthescroll.app' })
 async function postActivity({ userId, mood = null }) {
   try {
     const apiBaseUrl = await getApiBaseUrl();
-    const response = await fetch(`${apiBaseUrl}/activity`, {
+    const activityResponse = await fetch(`${apiBaseUrl}/activity`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -45,8 +45,8 @@ async function postActivity({ userId, mood = null }) {
       }),
     });
 
-    if (!response.ok) {
-      throw new Error(`activity failed with status ${response.status}`);
+    if (!activityResponse.ok) {
+      throw new Error(`activity failed with status ${activityResponse.status}`);
     }
   } catch (error) {
     console.error('Failed to post activity:', error);
