@@ -43,17 +43,6 @@ function App() {
     return () => data.subscription.unsubscribe();
   }, [auth]);
 
-  const handleChange = (changes, areaName) => {
-    if (areaName !== 'local') return;
-
-    if (changes.scrollTime) {
-      setScrollTime(changes.scrollTime.newValue ?? 0);
-    }
-    if (changes.currentSite) {
-      setCurrentSite(changes.currentSite.newValue ?? 'No site');
-    }
-  };
-
   useEffect(() => {
     if (!chrome?.storage?.local) return;
 
@@ -61,6 +50,15 @@ function App() {
       setScrollTime(result.scrollTime ?? 0);
       setCurrentSite(result.currentSite ?? 'No site');
     });
+
+    // Defined inside the effect so the same reference is used for both
+    // addListener and removeListener — avoids the stale-closure lint warning
+    // and ensures clean removal even if the component re-renders.
+    function handleChange(changes, areaName) {
+      if (areaName !== 'local') return;
+      if (changes.scrollTime) setScrollTime(changes.scrollTime.newValue ?? 0);
+      if (changes.currentSite) setCurrentSite(changes.currentSite.newValue ?? 'No site');
+    }
 
     chrome.storage.onChanged.addListener(handleChange);
 

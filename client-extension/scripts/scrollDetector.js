@@ -76,7 +76,18 @@ function stopDoomscrollTimer() {
   hasTriggeredDoomscrollSession = false;
 }
 
+// Throttle the scroll handler so it executes at most once per 200 ms.
+// This prevents unnecessary work on every individual scroll event while
+// still reliably detecting active scrolling. No per-scroll API calls are
+// made — the API call is guarded separately by hasTriggeredDoomscrollSession.
+const SCROLL_THROTTLE_MS = 200;
+let lastScrollAt = 0;
+
 window.addEventListener('scroll', () => {
+  const now = Date.now();
+  if (now - lastScrollAt < SCROLL_THROTTLE_MS) return;
+  lastScrollAt = now;
+
   clearTimeout(idleTimer);
   idleTimer = setTimeout(() => {
     stopDoomscrollTimer();
@@ -85,7 +96,7 @@ window.addEventListener('scroll', () => {
   if (!timerStarted) {
     startDoomscrollTimer();
   }
-});
+}, { passive: true });
 
 function showNudgeOverlay({ username, site, minutes, nudgeText }) {
   if (document.getElementById('ditch-the-scroll-backdrop')) {
@@ -136,9 +147,11 @@ function showNudgeOverlay({ username, site, minutes, nudgeText }) {
   });
 
   const message = document.createElement('div');
-  message.innerHTML = nudgeText
-    ? `${nudgeText}`
-    : `You spent <strong>${readableMinutes}</strong> on <strong>${readableSite}</strong>. Let's take a short pause.`;
+  // Use textContent (not innerHTML) — nudgeText arrives from the backend API
+  // and must NOT be rendered as raw HTML inside a third-party page's DOM.
+  message.textContent = nudgeText
+    ? nudgeText
+    : `You spent ${readableMinutes} on ${readableSite}. Let's take a short pause.`;
 
   const meta = document.createElement('div');
   meta.textContent = `${readableMinutes} on ${readableSite}`;
