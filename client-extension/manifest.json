@@ -11,7 +11,9 @@
         "*://*.instagram.com/*",
         "*://*.tiktok.com/*",
         "*://*.facebook.com/*",
-        "*://*.twitter.com/*"
+        "*://*.twitter.com/*",
+        "*://*.reddit.com/*",
+        "*://*.youtube.com/*"
       ],
       "js": ["./scripts/scrollDetector.js"],
       "css": ["./css/styles.css"]
