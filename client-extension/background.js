@@ -1,12 +1,34 @@
-const API_BASE_URL = 'http://localhost:4000';
+const DEFAULT_API_BASE_URL = 'http://localhost:4000';
+
+function normalizeApiBaseUrl(value) {
+  if (typeof value !== 'string') return DEFAULT_API_BASE_URL;
+  return value.trim().replace(/\/+$/, '') || DEFAULT_API_BASE_URL;
+}
+
+async function getApiBaseUrl() {
+  try {
+    const { apiBaseUrl } = await chrome.storage.local.get(['apiBaseUrl']);
+    return normalizeApiBaseUrl(apiBaseUrl);
+  } catch (error) {
+    console.warn('Unable to read apiBaseUrl from extension storage. Using default URL.', error);
+    return DEFAULT_API_BASE_URL;
+  }
+}
 
 async function syncUser({ userId, email = 'extension-user@ditchthescroll.app' }) {
   try {
-    await fetch(`${API_BASE_URL}/auth/sync-user`, {
+    const apiBaseUrl = await getApiBaseUrl();
+    const syncResponse = await fetch(`${apiBaseUrl}/auth/sync-user`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: userId, email }),
     });
+
+    if (!syncResponse.ok) {
+      throw new Error(
+        `sync-user failed with status ${syncResponse.status} ${syncResponse.statusText || ''}`.trim(),
+      );
+    }
   } catch (error) {
     console.error('Failed to sync user:', error);
   }
@@ -14,7 +36,8 @@ async function syncUser({ userId, email = 'extension-user@ditchthescroll.app' })
 
 async function postActivity({ userId, mood = null }) {
   try {
-    await fetch(`${API_BASE_URL}/activity`, {
+    const apiBaseUrl = await getApiBaseUrl();
+    const activityResponse = await fetch(`${apiBaseUrl}/activity`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -23,12 +46,19 @@ async function postActivity({ userId, mood = null }) {
         lastActive: new Date().toISOString(),
       }),
     });
+
+    if (!activityResponse.ok) {
+      throw new Error(
+        `activity failed with status ${activityResponse.status} ${activityResponse.statusText || ''}`.trim(),
+      );
+    }
   } catch (error) {
     console.error('Failed to post activity:', error);
   }
 }
 
 async function fetchNudge({ userId, site, minutes, triggerType = 'doomscroll' }) {
+  const apiBaseUrl = await getApiBaseUrl();
   const params = new URLSearchParams({
     userId,
     site,
@@ -36,7 +66,7 @@ async function fetchNudge({ userId, site, minutes, triggerType = 'doomscroll' })
     triggerType,
   });
 
-  const response = await fetch(`${API_BASE_URL}/nudges?${params.toString()}`);
+  const response = await fetch(`${apiBaseUrl}/nudges?${params.toString()}`);
   if (!response.ok) {
     throw new Error(`Nudge fetch failed with status ${response.status}`);
   }
